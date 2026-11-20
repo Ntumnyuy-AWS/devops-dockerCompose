@@ -1,0 +1,56 @@
+services:
+  frontend:
+    build: ./frontend
+    container_name: profile-frontend
+    ports:
+      - "8080:80"
+    networks:
+      - profile-network
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    container_name: profile-backend
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/profiledb
+    volumes:
+      - profile-uploads:/app/uploads
+    networks:
+      - profile-network
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "192.168.56.101:27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+      - mongodb-config:/data/configdb
+    networks:
+      - profile-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  profile-uploads:
+  mongodb-data:
+    external: true
+  mongodb-config:
+    external: true
+    name: fb1ac968886f093021f276afcb378f17986f578f52e0c87624a2a8a3afcb9661
+
+networks:
+  profile-network:
+    external: true
+
+
